@@ -1,6 +1,15 @@
 const express = require('express');
 
 const {
+  // Dashboard APIs
+  getDashboardSummary,
+  getRegistrationTrend,
+  getServiceDistribution,
+  getDashboardRecentLeads,
+  getDashboardRecentRegistrations,
+  getAgentPerformanceSummary,
+
+  // Existing APIs
   getDashboard,
   getAgents,
   getAgentById,
@@ -15,16 +24,67 @@ const {
 
 const router = express.Router();
 
-/*
-|--------------------------------------------------------------------------
-| Admin Dashboard
-|--------------------------------------------------------------------------
-*/
 
-/*
- * Get admin dashboard summary
- * GET /api/admin/dashboard
- */
+// ======================================================
+// ADMIN DASHBOARD
+// ======================================================
+
+// GET /api/admin/dashboard/summary
+router.get(
+  '/dashboard/summary',
+  protect,
+  adminOnly,
+  getDashboardSummary
+);
+
+
+// GET /api/admin/dashboard/registration-trend
+router.get(
+  '/dashboard/registration-trend',
+  protect,
+  adminOnly,
+  getRegistrationTrend
+);
+
+
+// GET /api/admin/dashboard/service-distribution
+router.get(
+  '/dashboard/service-distribution',
+  protect,
+  adminOnly,
+  getServiceDistribution
+);
+
+
+// GET /api/admin/dashboard/recent-leads
+router.get(
+  '/dashboard/recent-leads',
+  protect,
+  adminOnly,
+  getDashboardRecentLeads
+);
+
+
+// GET /api/admin/dashboard/recent-registrations
+router.get(
+  '/dashboard/recent-registrations',
+  protect,
+  adminOnly,
+  getDashboardRecentRegistrations
+);
+
+
+// GET /api/admin/dashboard/agent-performance
+router.get(
+  '/dashboard/agent-performance',
+  protect,
+  adminOnly,
+  getAgentPerformanceSummary
+);
+
+
+// Existing dashboard endpoint
+// GET /api/admin/dashboard
 router.get(
   '/dashboard',
   protect,
@@ -33,16 +93,11 @@ router.get(
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| Agent Management
-|--------------------------------------------------------------------------
-*/
+// ======================================================
+// AGENT MANAGEMENT
+// ======================================================
 
-/*
- * Get all active agents
- * GET /api/admin/agents
- */
+// GET /api/admin/agents
 router.get(
   '/agents',
   protect,
@@ -51,10 +106,7 @@ router.get(
 );
 
 
-/*
- * Get single agent details
- * GET /api/admin/agents/:id
- */
+// GET /api/admin/agents/:id
 router.get(
   '/agents/:id',
   protect,
@@ -63,16 +115,11 @@ router.get(
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| Enquiry Dashboard
-|--------------------------------------------------------------------------
-*/
+// ======================================================
+// ENQUIRY DASHBOARD
+// ======================================================
 
-/*
- * Get recent enquiries
- * GET /api/admin/recent-enquiries
- */
+// GET /api/admin/recent-enquiries
 router.get(
   '/recent-enquiries',
   protect,
@@ -81,10 +128,7 @@ router.get(
 );
 
 
-/*
- * Get unassigned enquiries
- * GET /api/admin/unassigned-enquiries
- */
+// GET /api/admin/unassigned-enquiries
 router.get(
   '/unassigned-enquiries',
   protect,
