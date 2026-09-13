@@ -5,7 +5,6 @@ const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 
 const {
-  isValidMobile,
   isRequired,
 } = require('../utils/validators');
 
@@ -23,21 +22,21 @@ const {
 const adminLogin = async (req, res, next) => {
   try {
     const {
-      mobile,
+      email,
       password,
     } = req.body;
 
-    const cleanMobile =
-      String(mobile || '').trim();
+    const cleanEmail =
+      String(email || '').trim().toLowerCase();
 
     // --------------------------------------------------
     // Validation
     // --------------------------------------------------
 
-    if (!isValidMobile(cleanMobile)) {
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       return errorResponse(
         res,
-        'Please enter a valid 10-digit mobile number',
+        'Please enter a valid email address',
         400
       );
     }
@@ -56,7 +55,7 @@ const adminLogin = async (req, res, next) => {
 
     const admin = await User
       .findOne({
-        mobile: cleanMobile,
+        email: cleanEmail,
         role: 'admin',
       })
       .select('+password');
@@ -64,7 +63,7 @@ const adminLogin = async (req, res, next) => {
     if (!admin) {
       return errorResponse(
         res,
-        'Invalid admin mobile number or password',
+        'Invalid admin email or password',
         401
       );
     }
@@ -94,7 +93,7 @@ const adminLogin = async (req, res, next) => {
     if (!passwordMatch) {
       return errorResponse(
         res,
-        'Invalid admin mobile number or password',
+        'Invalid admin email or password',
         401
       );
     }
