@@ -21,6 +21,13 @@ getCustomerById,
 } = require('../controllers/adminController');
 
 const {
+  getAllEnquiries,
+  getEnquiryById,
+  updateEnquiryStatus,
+  assignEnquiryAgent,
+} = require('../controllers/enquiryController');
+
+const {
   protect,
   adminOnly,
 } = require('../middleware/authMiddleware');
@@ -140,6 +147,42 @@ router.get(
 );
 
 
+
+// ======================================================
+// LEADS
+// ======================================================
+
+// GET /api/admin/leads
+router.get(
+  '/leads',
+  protect,
+  adminOnly,
+  getAllEnquiries
+);
+
+// GET /api/admin/leads/:id
+router.get(
+  '/leads/:id',
+  protect,
+  adminOnly,
+  getEnquiryById
+);
+
+// PATCH /api/admin/leads/:id/status
+router.patch(
+  '/leads/:id/status',
+  protect,
+  adminOnly,
+  updateEnquiryStatus
+);
+
+// PATCH /api/admin/leads/:id/assign
+router.patch(
+  '/leads/:id/assign',
+  protect,
+  adminOnly,
+  assignEnquiryAgent
+);
 
 // ======================================================
 // CUSTOMERS
