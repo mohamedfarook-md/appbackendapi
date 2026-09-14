@@ -8,6 +8,37 @@ const {
 } = require('../utils/response');
 
 
+function formatServiceDetails(value) {
+  if (!value) return '';
+
+  if (typeof value !== 'object') {
+    return String(value);
+  }
+
+  return Object.entries(value)
+    .map(([key, val]) => {
+      let formattedValue = val;
+
+      if (Array.isArray(val)) {
+        formattedValue = val.join(', ');
+      } else if (val && typeof val === 'object') {
+        formattedValue = Object.entries(val)
+          .map(([nestedKey, nestedVal]) => `${nestedKey}: ${nestedVal}`)
+          .join(', ');
+      }
+
+      const label = String(key)
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/[_-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+
+      return `${label}: ${formattedValue}`;
+    })
+    .join('\n');
+}
+
 
 // ======================================================
 // ADMIN DASHBOARD SUMMARY
@@ -1121,9 +1152,7 @@ const exportNewLeads = async (req, res, next) => {
           : '',
 
       'Service Details':
-        lead.serviceDetails
-          ? JSON.stringify(lead.serviceDetails)
-          : '',
+  formatServiceDetails(lead.serviceDetails),
     }));
 
     // Create Excel workbook
