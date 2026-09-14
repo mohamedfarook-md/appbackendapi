@@ -1,10 +1,12 @@
 const User = require('../models/User');
 const Enquiry = require('../models/Enquiry');
+const XLSX = require('xlsx');
 
 const {
   successResponse,
   errorResponse,
 } = require('../utils/response');
+
 
 
 // ======================================================
@@ -997,6 +999,182 @@ const getCustomerById = async (req, res, next) => {
 };
 
 
+
+// ======================================================
+// EXPORT NEW LEADS
+// GET /api/admin/leads/export
+// ======================================================
+
+const exportNewLeads = async (req, res, next) => {
+  try {
+    const adminId = req.user._id;
+
+    // Get admin's last Excel download time
+    const admin = await User.findById(adminId)
+      .select('lastLeadExportAt')
+      .lean();
+
+    const lastExportAt = admin?.lastLeadExportAt || null;
+
+    // Get only newly created leads
+    const query = {};
+
+    if (lastExportAt) {
+      query.createdAt = {
+        $gt: lastExportAt,
+      };
+    }
+
+    const enquiries = await Enquiry.find(query)
+      .populate(
+        'customerId',
+        'name mobile email'
+      )
+      .populate(
+        'assignedAgent',
+        'name mobile email'
+      )
+      .sort({
+        createdAt: 1,
+      })
+      .lean();
+
+    // No new leads
+    if (enquiries.length === 0) {
+      return errorResponse(
+        res,
+        'No new leads available for download',
+        404
+      );
+    }
+
+    // Convert MongoDB enquiries to Excel rows
+    const rows = enquiries.map((lead) => ({
+      'Enquiry ID':
+        lead.enquiryId || String(lead._id),
+
+      'Service Type':
+        lead.serviceType || '',
+
+      'Enquiry Type':
+        lead.enquiryType || '',
+
+      'Status':
+        lead.status || '',
+
+      'Source':
+        lead.source || '',
+
+      'Customer Name':
+        lead.customerDetails?.fullName ||
+        lead.customerId?.name ||
+        '',
+
+      'Mobile':
+        lead.customerDetails?.mobile ||
+        lead.customerId?.mobile ||
+        '',
+
+      'Email':
+        lead.customerDetails?.email ||
+        lead.customerId?.email ||
+        '',
+
+      'DOB':
+        lead.customerDetails?.dob || '',
+
+      'Age':
+        lead.customerDetails?.age || '',
+
+      'Gender':
+        lead.customerDetails?.gender || '',
+
+      'City':
+        lead.customerDetails?.city || '',
+
+      'State':
+        lead.customerDetails?.state || '',
+
+      'Pincode':
+        lead.customerDetails?.pincode || '',
+
+      'Assigned Agent':
+        lead.assignedAgent?.name || 'Unassigned',
+
+      'Agent Mobile':
+        lead.assignedAgent?.mobile || '',
+
+      'Agent Email':
+        lead.assignedAgent?.email || '',
+
+      'Admin Notes':
+        lead.adminNotes || '',
+
+      'Created At':
+        lead.createdAt
+          ? new Date(lead.createdAt).toLocaleString('en-IN')
+          : '',
+
+      'Updated At':
+        lead.updatedAt
+          ? new Date(lead.updatedAt).toLocaleString('en-IN')
+          : '',
+
+      'Service Details':
+        lead.serviceDetails
+          ? JSON.stringify(lead.serviceDetails)
+          : '',
+    }));
+
+    // Create Excel workbook
+    const workbook = XLSX.utils.book_new();
+
+    const worksheet =
+      XLSX.utils.json_to_sheet(rows);
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      'Leads'
+    );
+
+    // Generate Excel buffer
+    const excelBuffer = XLSX.write(
+      workbook,
+      {
+        type: 'buffer',
+        bookType: 'xlsx',
+      }
+    );
+
+    // Update last export time
+    await User.findByIdAndUpdate(
+      adminId,
+      {
+        lastLeadExportAt: new Date(),
+      }
+    );
+
+    // Send Excel file
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="MH-StepPays-New-Leads-${new Date()
+        .toISOString()
+        .slice(0, 10)}.xlsx"`
+    );
+
+    return res.send(excelBuffer);
+
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ======================================================
 // EXPORT
 // ======================================================
@@ -1006,6 +1184,7 @@ module.exports = {
 
    getCustomers,
   getCustomerById,
+  exportNewLeads,
   // New dashboard APIs
   getDashboardSummary,
   getRegistrationTrend,

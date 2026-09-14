@@ -18,6 +18,7 @@ const {
 
   getCustomers,
 getCustomerById,
+exportNewLeads,
 } = require('../controllers/adminController');
 
 const {
@@ -116,6 +117,7 @@ router.get(
 );
 
 
+
 // GET /api/admin/agents/:id
 router.get(
   '/agents/:id',
@@ -151,6 +153,19 @@ router.get(
 // ======================================================
 // LEADS
 // ======================================================
+
+
+
+
+// GET /api/admin/leads/export
+router.get(
+  '/leads/export',
+  protect,
+  adminOnly,
+  exportNewLeads
+);
+
+
 
 // GET /api/admin/leads
 router.get(
