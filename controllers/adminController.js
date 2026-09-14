@@ -883,12 +883,129 @@ const getUnassignedEnquiries = async (
 };
 
 
+
+
+// ======================================================
+// GET ALL CUSTOMERS
+// GET /api/admin/customers
+// ======================================================
+
+const getCustomers = async (req, res, next) => {
+  try {
+    const {
+      search = "",
+      mobile = "",
+      email = "",
+      status,
+      verification,
+      from,
+      to,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const query = { role: "customer" };
+
+    // Search
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { mobile: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (mobile) {
+      query.mobile = { $regex: mobile };
+    }
+
+    if (email) {
+      query.email = { $regex: email, $options: "i" };
+    }
+
+    if (status && status !== "ALL") {
+      query.isActive = status === "ACTIVE";
+    }
+
+    if (verification && verification !== "ALL") {
+      query.isVerified = verification === "VERIFIED";
+    }
+
+    if (from || to) {
+      query.createdAt = {};
+      if (from) query.createdAt.$gte = new Date(from);
+      if (to) query.createdAt.$lte = new Date(to);
+    }
+
+    const pageNumber = Number(page);
+    const pageLimit = Number(limit);
+
+    const [items, total] = await Promise.all([
+      User.find(query)
+        .select(
+          "name mobile email isActive isVerified createdAt lastLoginAt"
+        )
+        .sort({ createdAt: -1 })
+        .skip((pageNumber - 1) * pageLimit)
+        .limit(pageLimit)
+        .lean(),
+
+      User.countDocuments(query),
+    ]);
+
+    return successResponse(res, "Customers fetched successfully", {
+      items,
+      total,
+      page: pageNumber,
+      limit: pageLimit,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// ======================================================
+// GET CUSTOMER DETAILS
+// GET /api/admin/customers/:id
+// ======================================================
+
+const getCustomerById = async (req, res, next) => {
+  try {
+    const customer = await User.findOne({
+      _id: req.params.id,
+      role: "customer",
+    }).lean();
+
+    if (!customer) {
+      return errorResponse(res, "Customer not found", 404);
+    }
+
+    const leads = await Enquiry.find({
+      customerId: customer._id,
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return successResponse(res, "Customer details fetched successfully", {
+      customer,
+      leads,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 // ======================================================
 // EXPORT
 // ======================================================
 
 module.exports = {
 
+
+   getCustomers,
+  getCustomerById,
   // New dashboard APIs
   getDashboardSummary,
   getRegistrationTrend,

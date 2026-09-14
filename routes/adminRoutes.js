@@ -15,6 +15,9 @@ const {
   getAgentById,
   getRecentEnquiries,
   getUnassignedEnquiries,
+
+  getCustomers,
+getCustomerById,
 } = require('../controllers/adminController');
 
 const {
@@ -134,6 +137,28 @@ router.get(
   protect,
   adminOnly,
   getUnassignedEnquiries
+);
+
+
+
+// ======================================================
+// CUSTOMERS
+// ======================================================
+
+// GET /api/admin/customers
+router.get(
+  "/customers",
+  protect,
+  adminOnly,
+  getCustomers
+);
+
+// GET /api/admin/customers/:id
+router.get(
+  "/customers/:id",
+  protect,
+  adminOnly,
+  getCustomerById
 );
 
 
