@@ -44,6 +44,8 @@ const enquirySchema = new mongoose.Schema(
         'Bonds',
         'Investments',
         'Shares',
+        'Credit Card',
+        'Soundbox',
       ],
       required: [true, 'Service type is required'],
       index: true,
@@ -230,6 +232,8 @@ enquirySchema.pre('save', async function (next) {
     Bonds: 'BOND',
     Investments: 'INV',
     Shares: 'SHARE',
+      'Credit Card': 'CC',
+  Soundbox: 'SBOX',
   };
 
   const prefix = prefixMap[this.serviceType] || 'ENQ';
