@@ -8,6 +8,10 @@ const env = require('../config/env');
 const generateToken = require('../utils/generateToken');
 
 const {
+  sendPushNotification,
+} = require('../services/notificationService');
+
+const {
   isValidMobile,
   isValidEmail,
   isValidPassword,
@@ -349,6 +353,50 @@ const verifySignupOTP = async (req, res, next) => {
     // -----------------------------
 
     const token = generateToken(user._id);
+
+    // ------------------------------------------------------
+// LOGIN SUCCESS PUSH NOTIFICATION
+// ------------------------------------------------------
+
+try {
+  if (user.pushTokens?.length) {
+    const activeTokens = user.pushTokens.filter(
+      (item) =>
+        item.isActive &&
+        item.token
+    );
+
+    await Promise.allSettled(
+      activeTokens.map((item) =>
+        sendPushNotification({
+          token: item.token,
+
+          title: 'Welcome back to MH StepPays 👋',
+
+          body:
+            'You have successfully logged in to MH StepPays.',
+
+          data: {
+            type: 'LOGIN',
+          },
+        })
+      )
+    );
+
+    console.log(
+      '🔔 Login notification sent successfully.'
+    );
+  } else {
+    console.log(
+      'ℹ️ No active push token found for customer.'
+    );
+  }
+} catch (notificationError) {
+  console.error(
+    '⚠️ Login notification failed:',
+    notificationError.message
+  );
+}
 
     return successResponse(
       res,
