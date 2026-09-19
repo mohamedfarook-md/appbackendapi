@@ -29,6 +29,10 @@ const sendPushNotification = async ({
       }
     );
 
+    console.log(
+  '📤 EXPO PUSH RESPONSE:',
+  JSON.stringify(response.data, null, 2)
+);
     return response.data;
   } catch (error) {
     console.error(
