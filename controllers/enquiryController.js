@@ -1,5 +1,11 @@
 const Enquiry = require('../models/Enquiry');
 
+const User = require('../models/User');
+
+const {
+  sendPushNotification,
+} = require('../services/notificationService');
+
 const {
   isValidMobile,
   isValidEmail,
@@ -203,6 +209,58 @@ console.log('BODY:', JSON.stringify(req.body, null, 2));
     console.log('🔥 MONGODB CREATE COMPLETED');
 console.log('DB OBJECT ID:', enquiry._id);
 console.log('ENQUIRY ID:', enquiry.enquiryId);
+
+
+/*
+|--------------------------------------------------------------------------
+| Send Lead Created Notification
+|--------------------------------------------------------------------------
+*/
+
+try {
+  const user = await User.findById(req.user._id);
+
+  if (user && user.pushTokens?.length) {
+    const activeTokens = user.pushTokens.filter(
+      (item) =>
+        item.isActive &&
+        item.token
+    );
+
+    await Promise.allSettled(
+      activeTokens.map((item) =>
+        sendPushNotification({
+          token: item.token,
+
+          title: 'MH StepPays 🎉',
+
+          body:
+            'Your application has been received successfully. Track your application status in the app.',
+
+          data: {
+            type: 'LEAD',
+            lead_id: String(enquiry._id),
+            enquiry_id: enquiry.enquiryId,
+          },
+        })
+      )
+    );
+
+    console.log(
+      '🔔 Lead notification sent successfully.'
+    );
+  } else {
+    console.log(
+      'ℹ️ No active push token found for customer.'
+    );
+  }
+} catch (notificationError) {
+  console.error(
+    '⚠️ Lead notification failed:',
+    notificationError.message
+  );
+}
+
     /*
     |--------------------------------------------------------------------------
     | Response
