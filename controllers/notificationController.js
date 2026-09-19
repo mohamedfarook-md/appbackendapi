@@ -110,6 +110,64 @@ const sendTestNotification = async (req, res, next) => {
   }
 };
 
+
+/*
+|--------------------------------------------------------------------------
+| Send Login Success Notification
+|--------------------------------------------------------------------------
+*/
+
+const sendLoginSuccessNotification = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.',
+      });
+    }
+
+    const activeTokens = (user.pushTokens || []).filter(
+      (item) =>
+        item.isActive &&
+        item.token
+    );
+
+    if (!activeTokens.length) {
+      return res.status(404).json({
+        success: false,
+        message: 'No active push token found for this user.',
+      });
+    }
+
+    await Promise.allSettled(
+      activeTokens.map((item) =>
+        sendPushNotification({
+          token: item.token,
+
+          title: 'Welcome back to MH StepPays 👋',
+
+          body:
+            'You have successfully logged in to MH StepPays.',
+
+          data: {
+            type: 'LOGIN',
+          },
+        })
+      )
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Login success notification sent successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 /*
 |--------------------------------------------------------------------------
 | Export Controllers
@@ -119,4 +177,5 @@ const sendTestNotification = async (req, res, next) => {
 module.exports = {
   registerPushToken,
   sendTestNotification,
+  sendLoginSuccessNotification
 };

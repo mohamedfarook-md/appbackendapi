@@ -2,6 +2,7 @@ const express = require('express');
 
 const {
   registerPushToken,
+ sendLoginSuccessNotification,
   sendTestNotification,
 } = require('../controllers/notificationController');
 
@@ -36,6 +37,19 @@ router.post(
   protect,
   customerOnly,
   sendTestNotification
+);
+
+/*
+|--------------------------------------------------------------------------
+| Send Login Success Notification
+|--------------------------------------------------------------------------
+*/
+
+router.post(
+  '/login-success',
+  protect,
+  customerOnly,
+  sendLoginSuccessNotification
 );
 
 module.exports = router;
