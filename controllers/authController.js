@@ -715,6 +715,76 @@ const forgotPassword = async (req, res, next) => {
   }
 };
 
+
+// ======================================================
+// VERIFY FORGOT PASSWORD OTP
+// POST /api/auth/forgot-password/verify-otp
+// ======================================================
+
+const verifyForgotPasswordOTP = async (req, res, next) => {
+  try {
+    const {
+      mobile,
+      otp,
+    } = req.body;
+
+    const cleanMobile = String(mobile || '').trim();
+    const cleanOTP = String(otp || '').trim();
+
+    // -----------------------------
+    // Validation
+    // -----------------------------
+
+    if (!isValidMobile(cleanMobile)) {
+      return errorResponse(
+        res,
+        'Please enter a valid 10-digit mobile number',
+        400
+      );
+    }
+
+    if (!isValidOTP(cleanOTP)) {
+      return errorResponse(
+        res,
+        'Please enter a valid 6-digit OTP',
+        400
+      );
+    }
+
+    // -----------------------------
+    // Verify OTP
+    // -----------------------------
+
+    await verifyOTP(
+      cleanMobile,
+      cleanOTP,
+      'forgot_password'
+    );
+
+    // -----------------------------
+    // Success
+    // -----------------------------
+
+    return successResponse(
+      res,
+      'OTP verified successfully',
+      {
+        mobile: cleanMobile,
+        nextStep: 'RESET_PASSWORD',
+      }
+    );
+
+  } catch (error) {
+    return errorResponse(
+      res,
+      error.message,
+      400
+    );
+  }
+};
+
+
+
 // ======================================================
 // GET CURRENT USER
 // GET /api/auth/me
@@ -747,6 +817,7 @@ module.exports = {
   registerCustomer,
   verifySignupOTP,
   forgotPassword,
+  verifyForgotPasswordOTP,
   sendLoginOTP: sendLoginOTPRequest,
   loginWithPassword,
   loginWithOTP,

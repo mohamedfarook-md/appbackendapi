@@ -4,6 +4,7 @@ const {
   registerCustomer,
   verifySignupOTP,
   forgotPassword,
+  verifyForgotPasswordOTP,
   sendLoginOTP,
   loginWithPassword,
   loginWithOTP,
@@ -84,6 +85,23 @@ router.post(
   forgotPassword
 );
 
+
+
+/*
+ * Verify forgot password OTP
+ *
+ * POST /api/auth/forgot-password/verify-otp
+ *
+ * Body:
+ * {
+ *   mobile,
+ *   otp
+ * }
+ */
+router.post(
+  '/forgot-password/verify-otp',
+  verifyForgotPasswordOTP
+);
 
 /*
 |--------------------------------------------------------------------------
