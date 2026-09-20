@@ -629,6 +629,93 @@ const loginWithOTP = async (req, res, next) => {
 
 
 // ======================================================
+// SEND FORGOT PASSWORD OTP
+// POST /api/auth/forgot-password
+// ======================================================
+
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { mobile } = req.body;
+
+    const cleanMobile = String(mobile || '').trim();
+
+    // -----------------------------
+    // Validation
+    // -----------------------------
+
+    if (!isValidMobile(cleanMobile)) {
+      return errorResponse(
+        res,
+        'Please enter a valid 10-digit mobile number',
+        400
+      );
+    }
+
+    // -----------------------------
+    // Check user
+    // -----------------------------
+
+    const user = await User.findOne({
+      mobile: cleanMobile,
+    });
+
+    if (!user) {
+      return errorResponse(
+        res,
+        'No account found with this mobile number',
+        404
+      );
+    }
+
+    if (!user.isActive) {
+      return errorResponse(
+        res,
+        'Your account is inactive',
+        403
+      );
+    }
+
+    // -----------------------------
+    // Generate Forgot Password OTP
+    // -----------------------------
+
+    const otpData = await createOTP(
+      cleanMobile,
+      'forgot_password'
+    );
+
+    // -----------------------------
+    // Response
+    // -----------------------------
+
+    const responseData = {
+      otpId: otpData.otpId,
+      mobile: cleanMobile,
+      expiresAt: otpData.expiresAt,
+      nextStep: 'FORGOT_PASSWORD_OTP_VERIFICATION',
+    };
+
+    // Development only
+    if (env.nodeEnv === 'development') {
+      const otpRecord = await OTP
+        .findById(otpData.otpId)
+        .select('+otp');
+
+      responseData.otp = otpRecord?.otp || null;
+    }
+
+    return successResponse(
+      res,
+      'OTP generated successfully',
+      responseData
+    );
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ======================================================
 // GET CURRENT USER
 // GET /api/auth/me
 // ======================================================
@@ -659,6 +746,7 @@ const getMe = async (req, res) => {
 module.exports = {
   registerCustomer,
   verifySignupOTP,
+  forgotPassword,
   sendLoginOTP: sendLoginOTPRequest,
   loginWithPassword,
   loginWithOTP,

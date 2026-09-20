@@ -3,6 +3,7 @@ const express = require('express');
 const {
   registerCustomer,
   verifySignupOTP,
+  forgotPassword,
   sendLoginOTP,
   loginWithPassword,
   loginWithOTP,
@@ -60,6 +61,30 @@ router.post(
   verifySignupOTP
 );
 
+
+
+/*
+|--------------------------------------------------------------------------
+| FORGOT PASSWORD
+|--------------------------------------------------------------------------
+*/
+
+/*
+ * Send forgot password OTP
+ *
+ * POST /api/auth/forgot-password
+ *
+ * Body:
+ * {
+ *   mobile
+ * }
+ */
+router.post(
+  '/forgot-password',
+  forgotPassword
+);
+
+
 /*
 |--------------------------------------------------------------------------
 | CUSTOMER LOGIN
@@ -115,5 +140,7 @@ router.get(
   protect,
   getMe
 );
+
+
 
 module.exports = router;
