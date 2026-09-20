@@ -8,6 +8,7 @@ const {
   sendLoginOTP,
   loginWithPassword,
   loginWithOTP,
+  resetPassword,
   getMe,
 } = require('../controllers/authController');
 
@@ -102,6 +103,25 @@ router.post(
   '/forgot-password/verify-otp',
   verifyForgotPasswordOTP
 );
+
+
+/*
+ * Reset password
+ *
+ * POST /api/auth/reset-password
+ *
+ * Body:
+ * {
+ *   mobile,
+ *   newPassword,
+ *   confirmPassword
+ * }
+ */
+router.post(
+  '/reset-password',
+  resetPassword
+);
+
 
 /*
 |--------------------------------------------------------------------------

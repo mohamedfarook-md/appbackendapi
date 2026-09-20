@@ -1,11 +1,15 @@
 const bcrypt = require('bcryptjs');
 
+const jwt = require('jsonwebtoken');
+
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 
 const env = require('../config/env');
 
 const generateToken = require('../utils/generateToken');
+
+const generateResetToken = require('../utils/generateResetToken');
 
 const {
   sendPushNotification,
@@ -761,6 +765,24 @@ const verifyForgotPasswordOTP = async (req, res, next) => {
       'forgot_password'
     );
 
+
+    // -----------------------------
+// Generate reset token
+// -----------------------------
+
+const user = await User.findOne({
+  mobile: cleanMobile,
+});
+
+if (!user) {
+  return errorResponse(
+    res,
+    'No account found with this mobile number',
+    404
+  );
+}
+
+const resetToken = generateResetToken(user._id);
     // -----------------------------
     // Success
     // -----------------------------
@@ -770,6 +792,7 @@ const verifyForgotPasswordOTP = async (req, res, next) => {
       'OTP verified successfully',
       {
         mobile: cleanMobile,
+        resetToken,
         nextStep: 'RESET_PASSWORD',
       }
     );
@@ -784,6 +807,105 @@ const verifyForgotPasswordOTP = async (req, res, next) => {
 };
 
 
+// ======================================================
+// RESET PASSWORD
+// POST /api/auth/reset-password
+// ======================================================
+const resetPassword = async (req, res, next) => {
+  try {
+    const {
+      resetToken,
+      newPassword,
+      confirmPassword,
+    } = req.body;
+
+    if (!resetToken) {
+      return errorResponse(
+        res,
+        'Reset token is required',
+        400
+      );
+    }
+
+    if (!isValidPassword(newPassword)) {
+      return errorResponse(
+        res,
+        'Password must contain at least 8 characters',
+        400
+      );
+    }
+
+    if (newPassword !== confirmPassword) {
+      return errorResponse(
+        res,
+        'Passwords do not match',
+        400
+      );
+    }
+
+    let decodedToken;
+
+    try {
+      decodedToken = jwt.verify(
+        resetToken,
+        env.jwtSecret
+      );
+    } catch (error) {
+      return errorResponse(
+        res,
+        'Reset token is invalid or expired',
+        401
+      );
+    }
+
+    if (decodedToken.purpose !== 'password_reset') {
+      return errorResponse(
+        res,
+        'Invalid password reset token',
+        401
+      );
+    }
+
+    const user = await User
+      .findById(decodedToken.userId)
+      .select('+password');
+
+    if (!user) {
+      return errorResponse(
+        res,
+        'User account not found',
+        404
+      );
+    }
+
+    if (!user.isActive) {
+      return errorResponse(
+        res,
+        'User account is inactive',
+        403
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(
+      newPassword,
+      10
+    );
+
+    user.password = hashedPassword;
+
+    await user.save();
+
+    return successResponse(
+      res,
+      'Password reset successfully',
+      {
+        nextStep: 'LOGIN',
+      }
+    );
+  } catch (error) {
+    next(error);
+  }
+};
 
 // ======================================================
 // GET CURRENT USER
@@ -821,5 +943,6 @@ module.exports = {
   sendLoginOTP: sendLoginOTPRequest,
   loginWithPassword,
   loginWithOTP,
+  resetPassword,
   getMe,
 };
