@@ -522,7 +522,6 @@ const getEnquiryById = async (req, res, next) => {
 | Admin - Update Enquiry Status
 |--------------------------------------------------------------------------
 */
-
 const updateEnquiryStatus = async (
   req,
   res,
@@ -566,6 +565,10 @@ const updateEnquiryStatus = async (
       );
     }
 
+    // Keep previous status
+    const previousStatus = enquiry.status;
+
+    // Update status
     enquiry.status = status;
 
     if (adminNotes !== undefined) {
@@ -574,6 +577,85 @@ const updateEnquiryStatus = async (
     }
 
     await enquiry.save();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Send Status Update Notification
+    |--------------------------------------------------------------------------
+    */
+
+    if (previousStatus !== status) {
+      try {
+        const user = await User.findById(
+          enquiry.customerId
+        );
+
+        if (
+          user &&
+          user.pushTokens?.length
+        ) {
+          const activeTokens =
+            user.pushTokens.filter(
+              (item) =>
+                item.isActive &&
+                item.token
+            );
+
+          const statusLabels = {
+            NEW: 'New',
+            CONTACTED: 'Contacted',
+            IN_PROGRESS: 'In Progress',
+            DOCUMENT_PENDING:
+              'Document Pending',
+            SUBMITTED: 'Submitted',
+            APPROVED: 'Approved',
+            REJECTED: 'Rejected',
+            CLOSED: 'Closed',
+          };
+
+          const statusLabel =
+            statusLabels[status] ||
+            status;
+
+          await Promise.allSettled(
+            activeTokens.map((item) =>
+              sendPushNotification({
+                token: item.token,
+
+                title:
+                  'MH StepPays 🔔',
+
+                body:
+                  `Your ${enquiry.serviceType} enquiry status has been updated to ${statusLabel}.`,
+
+                data: {
+                  type: 'LEAD_STATUS_UPDATE',
+                  lead_id: String(
+                    enquiry._id
+                  ),
+                  enquiry_id:
+                    enquiry.enquiryId,
+                  status,
+                },
+              })
+            )
+          );
+
+          console.log(
+            '🔔 Enquiry status notification sent successfully.'
+          );
+        } else {
+          console.log(
+            'ℹ️ No active push token found for customer.'
+          );
+        }
+      } catch (notificationError) {
+        console.error(
+          '⚠️ Status notification failed:',
+          notificationError.message
+        );
+      }
+    }
 
     return successResponse(
       res,
@@ -584,7 +666,6 @@ const updateEnquiryStatus = async (
     next(error);
   }
 };
-
 /*
 |--------------------------------------------------------------------------
 | Admin - Assign Agent
