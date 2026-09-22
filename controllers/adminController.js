@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Company = require('../models/Company');
 const Enquiry = require('../models/Enquiry');
 const XLSX = require('xlsx');
 
@@ -703,6 +704,110 @@ const getDashboard = async (req, res, next) => {
 
 
 // ======================================================
+// CREATE COMPANY
+// POST /api/admin/companies
+// ======================================================
+
+const createCompany = async (req, res, next) => {
+  try {
+    const {
+      companyName,
+      email,
+      mobile,
+      status = 'active',
+    } = req.body;
+
+    if (!companyName || !email || !mobile) {
+      return errorResponse(
+        res,
+        'Company name, email and mobile are required',
+        400
+      );
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedMobile = mobile.trim();
+
+    const existingCompany = await Company.findOne({
+      $or: [
+        { email: normalizedEmail },
+        { mobile: normalizedMobile },
+      ],
+    });
+
+    if (existingCompany) {
+      return errorResponse(
+        res,
+        'Company with this email or mobile already exists',
+        409
+      );
+    }
+
+    const company = await Company.create({
+      companyName: companyName.trim(),
+      email: normalizedEmail,
+      mobile: normalizedMobile,
+      status,
+    });
+
+    return successResponse(
+      res,
+      'Company created successfully',
+      company,
+      201
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+const getCompanies = async (req, res, next) => {
+  try {
+    const companies = await Company.find()
+      .sort({ createdAt: -1 });
+
+    return successResponse(
+      res,
+      'Companies fetched successfully',
+      {
+        companies,
+        total: companies.length,
+      }
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+const getCompanyById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const company = await Company.findById(id);
+
+    if (!company) {
+      return errorResponse(
+        res,
+        'Company not found',
+        404
+      );
+    }
+
+    return successResponse(
+      res,
+      'Company fetched successfully',
+      company
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ======================================================
 // GET ALL AGENTS
 // GET /api/admin/agents
 // ======================================================
@@ -1211,8 +1316,11 @@ const exportNewLeads = async (req, res, next) => {
 module.exports = {
 
 
-   getCustomers,
+  getCustomers,
   getCustomerById,
+  createCompany,
+  getCompanies,
+  getCompanyById,
   exportNewLeads,
   // New dashboard APIs
   getDashboardSummary,

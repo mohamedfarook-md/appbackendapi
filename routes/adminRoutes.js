@@ -2,6 +2,9 @@ const express = require('express');
 
 const {
   // Dashboard APIs
+  createCompany,
+  getCompanies,
+  getCompanyById,
   getDashboardSummary,
   getRegistrationTrend,
   getServiceDistribution,
@@ -124,6 +127,35 @@ router.get(
   protect,
   adminOnly,
   getAgentById
+);
+
+// ======================================================
+// COMPANY MANAGEMENT
+// ======================================================
+
+// GET /api/admin/companies
+router.get(
+  '/companies',
+  protect,
+  adminOnly,
+  getCompanies
+);
+
+
+// GET /api/admin/companies/:id
+router.get(
+  '/companies/:id',
+  protect,
+  adminOnly,
+  getCompanyById
+);
+
+// POST /api/admin/companies
+router.post(
+  '/companies',
+  protect,
+  adminOnly,
+  createCompany
 );
 
 
