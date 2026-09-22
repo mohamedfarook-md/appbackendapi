@@ -42,7 +42,10 @@ connectDB();
 
 app.use(
   cors({
-    origin: '*',
+    origin: [
+      'https://mhsteppays.in',
+      'http://localhost:5173',
+    ],
     methods: [
       'GET',
       'POST',
@@ -55,9 +58,9 @@ app.use(
       'Content-Type',
       'Authorization',
     ],
+    credentials: true,
   })
 );
-
 app.use(
   express.json({
     limit: '10mb',
