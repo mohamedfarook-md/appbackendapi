@@ -639,22 +639,24 @@ const updateEnquiryStatus = async (
   next
 ) => {
   try {
-    const {
-      status,
-      adminNotes,
-    } = req.body;
+const {
+  status,
+  adminNotes,
+  statusReason,
+} = req.body;
 
-    const allowedStatuses = [
-      'NEW',
-      'CONTACTED',
-      'IN_PROGRESS',
-      'DOCUMENT_PENDING',
-      'SUBMITTED',
-      'APPROVED',
-      'REJECTED',
-      'CLOSED',
-    ];
-
+   const allowedStatuses = [
+  'NEW',
+  'CONTACTED',
+  'IN_PROGRESS',
+  'DOCUMENT_PENDING',
+  'SUBMITTED',
+  'IN_REVIEW',
+  'ADDITIONAL_DOCUMENTS_REQUIRED',
+  'APPROVED',
+  'REJECTED',
+  'CLOSED',
+];
     if (!allowedStatuses.includes(status)) {
       return errorResponse(
         res,
@@ -687,6 +689,11 @@ const updateEnquiryStatus = async (
         String(adminNotes).trim();
     }
 
+
+    if (statusReason !== undefined) {
+  enquiry.statusReason =
+    String(statusReason).trim();
+}
     await enquiry.save();
 
     /*
@@ -737,17 +744,21 @@ const updateEnquiryStatus = async (
                   'MH StepPays 🔔',
 
                 body:
-                  `Your ${enquiry.serviceType} enquiry status has been updated to ${statusLabel}.`,
+  enquiry.statusReason
+    ? `Your ${enquiry.serviceType} enquiry status has been updated to ${statusLabel}. Reason: ${enquiry.statusReason}`
+    : `Your ${enquiry.serviceType} enquiry status has been updated to ${statusLabel}.`,
 
-                data: {
-                  type: 'LEAD_STATUS_UPDATE',
-                  lead_id: String(
-                    enquiry._id
-                  ),
-                  enquiry_id:
-                    enquiry.enquiryId,
-                  status,
-                },
+data: {
+  type: 'LEAD_STATUS_UPDATE',
+  lead_id: String(
+    enquiry._id
+  ),
+  enquiry_id:
+    enquiry.enquiryId,
+  status,
+  status_reason:
+    enquiry.statusReason || '',
+},
               })
             )
           );
