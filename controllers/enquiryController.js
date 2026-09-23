@@ -282,15 +282,16 @@ try {
   });
 
   console.log(
-  '🔎 ADMIN NOTIFICATION NUMBERS:',
+  '🔎 ADMIN NUMBERS CONFIGURED:',
   ADMIN_NOTIFICATION_MOBILES
 );
 
 console.log(
-  '🔎 ADMINS FOUND:',
+  '🔎 ADMIN USERS FOUND:',
   admins.map((admin) => ({
-    id: admin._id,
+    id: String(admin._id),
     mobile: admin.mobile,
+    role: admin.role,
     isActive: admin.isActive,
     pushTokensCount: admin.pushTokens?.length || 0,
   }))
