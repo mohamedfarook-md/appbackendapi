@@ -7,8 +7,8 @@ const {
 } = require('../services/notificationService');
 
 const ADMIN_NOTIFICATION_MOBILES = [
-  '9043013833',
-  '7402414741',
+  '+91 9043013833',
+  '+91 7402414741',
 ];
 
 const {
