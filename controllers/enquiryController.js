@@ -281,6 +281,21 @@ try {
     },
   });
 
+  console.log(
+  '🔎 ADMIN NOTIFICATION NUMBERS:',
+  ADMIN_NOTIFICATION_MOBILES
+);
+
+console.log(
+  '🔎 ADMINS FOUND:',
+  admins.map((admin) => ({
+    id: admin._id,
+    mobile: admin.mobile,
+    isActive: admin.isActive,
+    pushTokensCount: admin.pushTokens?.length || 0,
+  }))
+);
+
   const adminTokens = admins.flatMap((admin) =>
     (admin.pushTokens || [])
       .filter(
