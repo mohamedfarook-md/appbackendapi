@@ -6,6 +6,11 @@ const {
   sendPushNotification,
 } = require('../services/notificationService');
 
+const ADMIN_NOTIFICATION_MOBILES = [
+  '9043013833',
+  '7402414741',
+];
+
 const {
   isValidMobile,
   isValidEmail,
@@ -258,6 +263,92 @@ try {
   console.error(
     '⚠️ Lead notification failed:',
     notificationError.message
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Send New Lead Notification to Admins
+|--------------------------------------------------------------------------
+*/
+
+try {
+  const admins = await User.find({
+    role: 'admin',
+    isActive: true,
+    mobile: {
+      $in: ADMIN_NOTIFICATION_MOBILES,
+    },
+  });
+
+  const adminTokens = admins.flatMap((admin) =>
+    (admin.pushTokens || [])
+      .filter(
+        (item) =>
+          item.isActive &&
+          item.token
+      )
+      .map((item) => item.token)
+  );
+
+  if (adminTokens.length) {
+    const createdDate = new Date(enquiry.createdAt);
+
+    const date = createdDate.toLocaleDateString(
+      'en-IN'
+    );
+
+    const time = createdDate.toLocaleTimeString(
+      'en-IN',
+      {
+        hour: '2-digit',
+        minute: '2-digit',
+      }
+    );
+
+    await Promise.allSettled(
+      adminTokens.map((token) =>
+        sendPushNotification({
+          token,
+
+          title: '🔔 New Lead Received',
+
+          body:
+            `Lead ID: ${enquiry.enquiryId} | ` +
+            `Customer: ${enquiry.customerDetails.fullName} | ` +
+            `Service: ${enquiry.serviceType} | ` +
+            `Mobile: ${enquiry.customerDetails.mobile} | ` +
+            `${date} ${time}`,
+
+          data: {
+            type: 'NEW_LEAD_ADMIN',
+            lead_id: String(enquiry._id),
+            enquiry_id: enquiry.enquiryId,
+            customer_name:
+              enquiry.customerDetails.fullName,
+            service_type:
+              enquiry.serviceType,
+            customer_mobile:
+              enquiry.customerDetails.mobile,
+            created_at:
+              enquiry.createdAt,
+          },
+        })
+      )
+    );
+
+    console.log(
+      '🔔 New lead notification sent to admins.'
+    );
+  } else {
+    console.log(
+      'ℹ️ No active admin push tokens found.'
+    );
+  }
+} catch (adminNotificationError) {
+  console.error(
+    '⚠️ Admin lead notification failed:',
+    adminNotificationError.message
   );
 }
 

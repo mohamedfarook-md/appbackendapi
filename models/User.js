@@ -36,6 +36,12 @@ const userSchema = new mongoose.Schema(
       default: 'customer',
     },
 
+    companyId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Company',
+  default: null,
+},
+
     isActive: {
       type: Boolean,
       default: true,

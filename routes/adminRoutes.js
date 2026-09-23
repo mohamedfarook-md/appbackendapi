@@ -5,6 +5,8 @@ const {
   createCompany,
   getCompanies,
   getCompanyById,
+  createCompanyAgent,
+  getCompanyAgents,
   getDashboardSummary,
   getRegistrationTrend,
   getServiceDistribution,
@@ -156,6 +158,24 @@ router.post(
   protect,
   adminOnly,
   createCompany
+);
+
+
+
+router.post(
+  '/companies/:companyId/agents',
+  protect,
+  adminOnly,
+  createCompanyAgent
+);
+
+
+
+router.get(
+  '/companies/:companyId/agents',
+  protect,
+  adminOnly,
+  getCompanyAgents
 );
 
 

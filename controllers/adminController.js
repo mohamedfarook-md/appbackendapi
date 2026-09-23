@@ -807,6 +807,112 @@ const getCompanyById = async (req, res, next) => {
   }
 };
 
+
+
+
+
+const createCompanyAgent = async (req, res, next) => {
+  try {
+    const { companyId } = req.params;
+
+    const {
+      name,
+      mobile,
+      email = '',
+      isActive = true,
+    } = req.body;
+
+    if (!name || !mobile) {
+      return errorResponse(
+        res,
+        'Agent name and mobile are required',
+        400
+      );
+    }
+
+    const company = await Company.findById(companyId);
+
+    if (!company) {
+      return errorResponse(
+        res,
+        'Company not found',
+        404
+      );
+    }
+
+    const existingAgent = await User.findOne({
+      mobile: mobile.trim(),
+    });
+
+    if (existingAgent) {
+      return errorResponse(
+        res,
+        'An account with this mobile number already exists',
+        409
+      );
+    }
+
+    const agent = await User.create({
+      name: name.trim(),
+      mobile: mobile.trim(),
+      email: email.trim().toLowerCase(),
+      role: 'agent',
+      companyId: company._id,
+      isActive,
+      isVerified: false,
+    });
+
+    return successResponse(
+      res,
+      'Agent created successfully',
+      agent,
+      201
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+
+const getCompanyAgents = async (req, res, next) => {
+  try {
+    const { companyId } = req.params;
+
+    const company = await Company.findById(companyId);
+
+    if (!company) {
+      return errorResponse(
+        res,
+        'Company not found',
+        404
+      );
+    }
+
+    const agents = await User.find({
+      role: 'agent',
+      companyId: company._id,
+    })
+      .select(
+        'name mobile email role companyId isActive createdAt'
+      )
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return successResponse(
+      res,
+      'Company agents fetched successfully',
+      {
+        agents,
+        total: agents.length,
+      }
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ======================================================
 // GET ALL AGENTS
 // GET /api/admin/agents
@@ -1321,6 +1427,8 @@ module.exports = {
   createCompany,
   getCompanies,
   getCompanyById,
+  createCompanyAgent,
+  getCompanyAgents,
   exportNewLeads,
   // New dashboard APIs
   getDashboardSummary,
