@@ -6,9 +6,13 @@ const {
   sendPushNotification,
 } = require('../services/notificationService');
 
+// const ADMIN_NOTIFICATION_MOBILES = [
+//   '+91 9043013833',
+//   '+91 7402414741',
+// ];
+
 const ADMIN_NOTIFICATION_MOBILES = [
-  '+91 9043013833',
-  '+91 7402414741',
+  '9000000000',
 ];
 
 const {
