@@ -160,7 +160,13 @@ router.post(
   createCompany
 );
 
-
+// PATCH /api/admin/companies/:id
+router.patch(
+  '/companies/:id',
+  protect,
+  adminOnly,
+  updateCompany
+);
 
 router.post(
   '/companies/:companyId/agents',

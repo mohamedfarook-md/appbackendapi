@@ -808,6 +808,63 @@ const getCompanyById = async (req, res, next) => {
 };
 
 
+// ======================================================
+// UPDATE COMPANY
+// PATCH /api/admin/companies/:id
+// ======================================================
+
+const updateCompany = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      companyName,
+      email,
+      mobile,
+      status,
+    } = req.body;
+
+    const company = await Company.findById(id);
+
+    if (!company) {
+      return errorResponse(
+        res,
+        'Company not found',
+        404
+      );
+    }
+
+    if (companyName !== undefined) {
+      company.companyName =
+        companyName.trim();
+    }
+
+    if (email !== undefined) {
+      company.email =
+        email.trim().toLowerCase();
+    }
+
+    if (mobile !== undefined) {
+      company.mobile =
+        mobile.trim();
+    }
+
+    if (status !== undefined) {
+      company.status = status;
+    }
+
+    await company.save();
+
+    return successResponse(
+      res,
+      'Company updated successfully',
+      company
+    );
+
+  } catch (error) {
+    next(error);
+  }
+};
 
 
 
