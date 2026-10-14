@@ -794,28 +794,83 @@ data: {
 |--------------------------------------------------------------------------
 */
 
-const assignEnquiryAgent = async (
-  req,
-  res,
-  next
-) => {
+// const assignEnquiryAgent = async (
+//   req,
+//   res,
+//   next
+// ) => {
+//   try {
+//     const {
+//       agentId,
+//     } = req.body;
+
+//     if (!agentId) {
+//       return errorResponse(
+//         res,
+//         'Agent ID is required',
+//         400
+//       );
+//     }
+
+//     const enquiry =
+//       await Enquiry.findById(
+//         req.params.id
+//       );
+
+//     if (!enquiry) {
+//       return errorResponse(
+//         res,
+//         'Enquiry not found',
+//         404
+//       );
+//     }
+
+//     enquiry.assignedAgent = agentId;
+
+//     await enquiry.save();
+
+//     return successResponse(
+//       res,
+//       'Enquiry assigned successfully',
+//       enquiry
+//     );
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
+
+
+
+
+const assignEnquiryAgent = async (req, res, next) => {
   try {
-    const {
-      agentId,
-    } = req.body;
+    const { agentId } = req.body;
+    const { id } = req.params;
 
     if (!agentId) {
+      return errorResponse(res, 'Agent ID is required', 400);
+    }
+
+    if (!/^[a-f\d]{24}$/i.test(agentId)) {
+      return errorResponse(res, 'Invalid agent ID', 400);
+    }
+
+    const agent = await User.findOne({
+      _id: agentId,
+      role: 'agent',
+      isActive: true,
+    });
+
+    if (!agent) {
       return errorResponse(
         res,
-        'Agent ID is required',
-        400
+        'Active agent not found',
+        404
       );
     }
 
-    const enquiry =
-      await Enquiry.findById(
-        req.params.id
-      );
+    const enquiry = await Enquiry.findById(id);
 
     if (!enquiry) {
       return errorResponse(
@@ -825,19 +880,32 @@ const assignEnquiryAgent = async (
       );
     }
 
-    enquiry.assignedAgent = agentId;
+    // Prevent assigning an already assigned lead again.
+    if (enquiry.assignedAgent) {
+      return errorResponse(
+        res,
+        'This lead is already assigned to an agent',
+        409
+      );
+    }
 
+    enquiry.assignedAgent = agent._id;
     await enquiry.save();
+
+    const updatedEnquiry = await Enquiry.findById(id)
+      .populate('assignedAgent', 'name mobile email')
+      .lean();
 
     return successResponse(
       res,
       'Enquiry assigned successfully',
-      enquiry
+      updatedEnquiry
     );
   } catch (error) {
     next(error);
   }
 };
+
 
 module.exports = {
   createEnquiry,
