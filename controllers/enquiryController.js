@@ -466,17 +466,24 @@ const getMyEnquiryById = async (req, res, next) => {
 
 const getAllEnquiries = async (req, res, next) => {
   try {
-    const {
-      serviceType,
-      status,
-      enquiryType,
-      search,
-      page = 1,
-      limit = 20,
-    } = req.query;
+   
+const {
+  serviceType,
+  status,
+  enquiryType,
+  search,
+  agentId,
+  page = 1,
+  limit = 20,
+} = req.query;
+
 
     const filter = {};
 
+
+    if (agentId) {
+  filter.assignedAgent = agentId;
+}
     /*
     |--------------------------------------------------------------------------
     | Service Filter
