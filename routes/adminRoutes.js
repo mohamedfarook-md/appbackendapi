@@ -31,6 +31,7 @@ const {
   getEnquiryById,
   updateEnquiryStatus,
   assignEnquiryAgent,
+  unassignEnquiryAgent,
 } = require('../controllers/enquiryController');
 
 const {
@@ -256,6 +257,16 @@ router.patch(
   adminOnly,
   assignEnquiryAgent
 );
+
+
+ // PATCH /api/admin/leads/:id/unassign
+router.patch(
+  '/leads/:id/unassign',
+  protect,
+  adminOnly,
+  unassignEnquiryAgent
+);
+
 
 // ======================================================
 // CUSTOMERS

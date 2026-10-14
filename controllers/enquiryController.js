@@ -914,6 +914,43 @@ const assignEnquiryAgent = async (req, res, next) => {
 };
 
 
+
+const unassignEnquiryAgent = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const enquiry = await Enquiry.findById(id);
+
+    if (!enquiry) {
+      return errorResponse(res, "Enquiry not found", 404);
+    }
+
+    if (!enquiry.assignedAgent) {
+      return errorResponse(
+        res,
+        "This lead is not assigned to an agent",
+        400
+      );
+    }
+
+    enquiry.assignedAgent = null;
+    await enquiry.save();
+
+    const updatedEnquiry = await Enquiry.findById(id)
+      .populate("assignedAgent", "name mobile email")
+      .lean();
+
+    return successResponse(
+      res,
+      "Lead unassigned successfully",
+      updatedEnquiry
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 module.exports = {
   createEnquiry,
   getMyEnquiries,
@@ -922,4 +959,5 @@ module.exports = {
   getEnquiryById,
   updateEnquiryStatus,
   assignEnquiryAgent,
+  unassignEnquiryAgent,
 };
